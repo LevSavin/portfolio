@@ -1,131 +1,274 @@
-var CatalogItem = function (name, imgSrc, price) {
-    this.name = name;
-    this.imgSrc = imgSrc;
-    this.price = price;
-};
+class Api {
+    constructor() {
+        this.url = "./goods.json";
+    }
 
-var i1 = new CatalogItem("Леггинсы", "img/1.jpg", 3000);
-var i2 = new CatalogItem("Платье", "img/2.jpg", 4000);
-var i3 = new CatalogItem("Свитер", "img/3.jpg", 5000);
+    fetch(error, success) {
+        let xhr;
 
-var CartItem = function (name, imgSrc, price) {
-    this.name = selectedItem.name;
-    this.imgSrc = selectedItem.imgSrc;
-    this.price = selectedItem.price;
-}
+        if (window.XMLHttpRequest) {
+            xhr = new XMLHttpRequest();
+        } else if (window.ActiveXObject) {
+            xhr = new ActiveXObject("Microsoft.XMLHTTP");
+        }
 
-var itemsArray = [i1, i2, i3];
-var cartArray = []
-var sum = 0;
-var selectedItems = document.querySelector(".selected-items"); //корзина в html
-var selectedItem, indexOfname;
-var cartItem = {};
+        xhr.onreadystatechange = function () {
+            if (xhr.readyState === 4) {
+                if (xhr.status === 200) {
+                    success(JSON.parse(xhr.responseText));
+                } else if (xhr.status > 400) {
+                    error("Ошибка");
+                }
+            }
+        }
 
-function init() {
-    var catalog = document.querySelector(".catalog");
-    var i, item;
+        xhr.open('GET', this.url, true);
+        xhr.send();
+    }
 
-    for (i = 0; i < itemsArray.length; i++) { // заполняем каталог товарами из массива itemsArray
-        item = document.createElement("div"); // создали блок
-        item.classList.add("div__item");
-
-        itemImg = document.createElement("img");
-        itemImg.src = itemsArray[i].imgSrc;
-        itemImg.classList.add("div__img");
-        item.append(itemImg); // добавили в блок картинку товара
-
-        itemContent = document.createElement("div");
-        itemContent.classList.add("div__item_goods-content");
-        itemContent.append(document.createTextNode(itemsArray[i].name + " "));
-        itemContent.append(document.createTextNode(itemsArray[i].price + "\u20bd"));
-
-        itemBtn = document.createElement("button");
-        itemBtn.classList.add("div__button");
-        itemBtn.innerText = "Добавить";
-        itemBtn.setAttribute("id", "btn_" + i); // у каждого товара кнопка с уникальным id
-        itemBtn.onclick = addItem;
-        itemContent.append(itemBtn);
-
-        item.append(itemContent);
-        catalog.append(item); // добавиили товар в каталог
+    fetchPromise() {
+        return new Promise((resolve, reject) => {
+            this.fetch(reject, resolve)
+        })
     }
 }
 
-function addItem(obj) {
-    itemNum = obj.target.id.split("_")[1] //индекс товара из массива товаров в каталоге
-    selectedItem = itemsArray[itemNum];
-
-    if (isHasAlready() == undefined) { // если товара нет в корзине, то добавить его
-        cartItem = new CartItem(selectedItem.name, selectedItem.imgSrc, selectedItem.price)
-        cartArray.push(cartItem)
-        indexOfname = cartArray.findIndex(x => x.name === itemsArray[itemNum].name);
-        cartArray[indexOfname].quantity = 1; // увеличить количество
-        var tr = selectedItems.insertRow(-1); // индекс -1 - строка добавляется как последняя
-        tr.setAttribute("id", "itemString_" + itemNum);
-        var td = tr.insertCell(-1);
-        td.append(document.createTextNode(cartItem.name + " " + cartItem.quantity + " шт."));
-        td.setAttribute("id", "itemQuantity_" + itemNum);
-        var td = tr.insertCell(-1);
-        td.append(document.createTextNode((cartItem.price * cartItem.quantity) + "\u20bd"));
-        td.setAttribute("id", "price" + itemNum);
-
-        var td = tr.insertCell(-1);
-        removeBtn = document.createElement("button");
-        removeBtn.innerText = "-";
-        removeBtn.setAttribute("id", "removeBtn_" + itemNum); // у каждого товара кнопка с уникальным id
-        removeBtn.onclick = removeItem;
-        td.append(removeBtn);
-    } else {
-        indexOfname = cartArray.findIndex(x => x.name === itemsArray[itemNum].name); // ищем индекс добавленного товара в корзине
-        cartArray[indexOfname].quantity += 1; // увеличить количество
-        changePrice()
+class GoodsItem {
+    constructor(title, price, src, id) {
+        this.title = title;
+        this.src = src;
+        this.price = price;
+        this.id = id;
     }
-    countSum();
-}
 
-function isHasAlready() { // проверяем по названию, есть ли уже в корзине выбранный товар
-    var searchCatalog = selectedItem.name;
-    searchCart = cartArray.find(x => x.name === searchCatalog);
-    return searchCart;
-}
-
-function removeItem(obj) { // уменьшить количество товара / скрыть позицию
-    itemNum = obj.target.id.split("_")[1] // индекс товара из массива товаров в каталоге
-    indexOfname = cartArray.findIndex(x => x.name === itemsArray[itemNum].name); // индекс товара из массива корзины
-    if (cartArray[indexOfname].quantity > 1) {
-        cartArray[indexOfname].quantity -= 1; // уменьшить количество
-        changePrice()
-    } else {
-        var remItem = document.getElementById("itemString_" + itemNum)
-        remItem.remove()
-        cartArray.splice(indexOfname, 1)
+    getHtml() {
+        return `<div class="div__item"><img src=${this.src} class="div__img"><div class="div__item_goods-content">${this.title} ${this.price} \u20bd<button class="div__button" id="btn_${this.id}">Добавить</button></div></div>`;
     }
-    countSum()
 }
 
-function changePrice() { // изменить итог стоимости позиции
-    var changedItem = document.getElementById("price" + itemNum);
-    changedItem.textContent = ((cartArray[indexOfname].price * cartArray[indexOfname].quantity) + "\u20bd");
-    var changedItem = document.getElementById("itemQuantity_" + itemNum);
-    changedItem.textContent = (cartArray[indexOfname].name + " " + cartArray[indexOfname].quantity + " шт.");
+class Buttons {
+    constructor() {
+        this.$buttonsAdd = document.querySelector(".catalog");
+        this.$search = document.querySelector('#search');
+    }
+
+    setButton() {
+        this.$buttonsAdd.addEventListener("click", event => {
+            var button = event.target.closest("button");
+            if (button) { //проверяем, вдруг button-родителя нет
+                goodsList.addToCart(button)
+            }
+        });
+    }
+
+    setSearchHandler(callback) {
+        this.$search.addEventListener('input', callback);
+    }
 }
 
-function countSum() { // считаем итоговую сумму корзины
-    var initialValue = 0; // объект, используемый в качестве первого аргумента при первом вызове функции callback
-    sum = cartArray.reduce(function (accumulator, currentValue) { // подсчёт суммы по товарам в корзине
-        return accumulator + (currentValue.price * currentValue.quantity);
-    }, initialValue);
-    document.querySelector(".sum").textContent = "Сумма: " + sum + "\u20bd";
+class GoodsList {
+    constructor() {
+        this.api = new Api();
+        this.$goodsList = document.querySelector(".catalog");
+        this.goods = [];
+        this.filteredGoods = [];
+
+        const fetch = this.api.fetchPromise();
+
+        fetch.then((data) => {
+                this.onFetchSuccess(data)
+            })
+            .catch((err) => {
+                this.onFetchError(err)
+            });
+    }
+
+    onFetchSuccess(data) {
+        this.goods = data.map(({
+            title,
+            price,
+            src,
+            id
+        }) => new GoodsItem(title, price, src, id));
+        this.filteredGoods = this.goods;
+        this.render();
+        this.addBtn();
+    }
+
+    onFetchError(err) {
+        this.$goodsList.insertAdjacentHTML("beforeend", `<h3>${err}</h3>`);
+    }
+
+    render() {
+        this.$goodsList.textContent = "";
+        this.filteredGoods.forEach((item) => {
+            this.$goodsList.insertAdjacentHTML('beforeend', item.getHtml());
+        })
+    }
+
+    addBtn() {
+        this.buttons = new Buttons();
+        this.buttons.setButton();
+        this.buttons.setSearchHandler((evt) => {
+            this.search(evt.target.value);
+        })
+
+    }
+
+    addToCart(button) {
+        cartList.addToCart(button)
+    }
+
+    search(str) {
+        if (str === '') {
+            this.filteredGoods = this.goods;
+        }
+        const regexp = new RegExp(str, 'gi');
+        this.filteredGoods = this.goods.filter((good) => regexp.test(good.title));
+        this.render();
+    }
 }
 
-function clearCart() { // очистка корзины
-    sum = 0;
-    cartArray.forEach(function (item) {
-        item.quantity = 0
-    })
-    cartArray = [];
-    selectedItems.textContent = '';
-    countSum();
+class CartItem {
+    constructor(title, price, src, id, quantity) {
+        this.title = title;
+        this.src = src;
+        this.price = price;
+        this.id = id;
+        this.quantity = quantity;
+    }
+
+    getHtml() {
+        return `<tbody id="itemCart_${this.id}"><tr><td>${this.title} </td><td id="quantity_${this.id}">${this.quantity}</td><td> шт.</td><td id="price_${this.id}">${this.price*this.quantity}</td><td>\u20bd</td><td><button data-action="increase" id="increase_${this.id}">+</button><td><button data-action="decrease" id="decrease_${this.id}">-</button></td></tr></tbody>`;
+    }
 }
 
-window.onload = init;
+class CartButtons {
+    constructor(elem) {
+        elem.onclick = this.onClick.bind(this); //  метод this.onClick привязывается к контексту текущего объекта this. Т.к. иначе this внутри него будет ссылаться на DOM-элемент (elem), а не на объект Buttons, и this[action] будет не тем, что нам нужно.
+    }
+
+    increase(button) {
+        cartList.increase(button)
+    }
+
+    decrease(button) {
+        cartList.decrease(button)
+    }
+
+    clearCart() {
+        cartList.clearCart()
+    }
+
+    onClick(event) {
+        let button = event.target.closest("button");
+        if (button) { //проверяем, вдруг button-родителя нет
+            let action = event.target.closest("button").dataset.action; // определяем значения атрибута data у кнопки
+            if (action) {
+                this[action](button);
+            }
+        }
+    };
+}
+
+class CartList {
+    constructor() {
+        this.$cartList = document.querySelector(".selected-items");
+        this.$cartSum = document.querySelector(".sum");
+        this.cartArray = [];
+        this.fetchGoods()
+    }
+
+    fetchGoods() {
+        if (this.cartArray.length > 0) {
+            this.cartArray = this.cartArray.map(({
+                title,
+                price,
+                src,
+                id,
+                quantity
+            }) => new CartItem(title, price, src, id, quantity));
+            this.render();
+            this.countSum();
+            this.addBtn();
+        }
+    }
+
+    render() {
+        this.$cartList.textContent = "";
+        this.cartArray.forEach((good) => {
+            this.$cartList.insertAdjacentHTML('beforeend', good.getHtml());
+        })
+    }
+
+    addBtn() {
+        this.buttons = new CartButtons(DOMcartList);
+    }
+
+    countSum() {
+        let initialValue = 0;
+        let sum = this.cartArray.reduce(function (accumulator, currentValue) {
+            return accumulator + (currentValue.price * currentValue.quantity);
+        }, initialValue);
+        document.querySelector(".sum").textContent = `${sum} \u20bd`;
+        if (this.cartArray.length < 1) {
+            this.$cartSum.textContent = "";
+        }
+    }
+
+    setId(button) {
+        catalogId = button.id.split("_")[1] //индекс товара из массива товаров в каталоге
+        cartId = this.cartArray.findIndex(x => x.id == catalogId); // индекс товара из массива корзины
+    }
+
+    addToCart(button) {
+        let itemNum = button.id.split("_")[1] //индекс товара из массива товаров в каталоге
+        let selectedItem = goodsList.goods[itemNum];
+
+        if ((this.cartArray.length < 1) || (hasAlready(this.cartArray) == undefined)) {
+            let cartItem = Object.create(selectedItem)
+            cartItem.quantity = 1;
+            this.cartArray.push(cartItem);
+            this.fetchGoods()
+        } else {
+            this.increase(button)
+        }
+
+        function hasAlready(cart) { // проверяем по id, есть ли уже в корзине выбранный товар
+            return cart.find(x => x.id === selectedItem.id);
+        }
+    }
+
+    increase(button) {
+        this.setId(button);
+        this.cartArray[cartId].quantity += 1;
+        document.getElementById("quantity_" + catalogId).textContent = this.cartArray[cartId].quantity;
+        document.getElementById("price_" + catalogId).textContent = this.cartArray[cartId].quantity * this.cartArray[cartId].price;
+        this.countSum()
+    }
+
+    decrease(button) {
+        this.setId(button);
+        if (this.cartArray[cartId].quantity > 1) {
+            this.cartArray[cartId].quantity -= 1;
+            document.getElementById("quantity_" + catalogId).textContent = this.cartArray[cartId].quantity;
+            document.getElementById("price_" + catalogId).textContent = this.cartArray[cartId].quantity * this.cartArray[cartId].price;
+        } else {
+            let remItem = document.getElementById("itemCart_" + catalogId)
+            remItem.remove()
+            this.cartArray.splice(cartId, 1)
+        }
+        this.countSum()
+    }
+
+    clearCart() {
+        this.cartArray = [];
+        this.countSum()
+        this.$cartList.textContent = "";
+        this.$cartSum.textContent = "";
+    }
+}
+
+var catalogId, cartId;
+const goodsList = new GoodsList();
+const cartList = new CartList();

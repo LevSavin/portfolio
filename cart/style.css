@@ -6,12 +6,13 @@
 .cart {
     grid-column: 3 / 4;
     grid-row: 1 / 2;
-      display: flex;
+    display: flex;
     flex-direction: column;
     align-items: center;
 }
 
-.cart__tittle, .items__tittle {
+.cart-tittle,
+.items-tittle {
     text-align: center;
     margin: 10px 0 10px 0;
 }
@@ -19,6 +20,7 @@
 .items {
     grid-column: 2 / 3;
     grid-row: 1 / 2;
+    text-align: center;
 }
 
 .items__tittle {
@@ -55,4 +57,17 @@
 
 .display-none {
     display: none;
+}
+
+.items-search {
+    text-align: center;
+    margin: 0 0 17px 0;
+    min-height: 20px;
+    font-size: 14px;
+}
+
+.items-search:focus,
+.items-search:hover {
+    outline: 2px solid gray;
+    border-color: transparent;
 }

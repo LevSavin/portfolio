@@ -10,16 +10,17 @@
 
 <body>
     <div class="container">
-        <div class="cart">
-            <h3 class="cart__tittle">Корзина</h3>
-            <table class="selected-items"></table>
-            <span class="sum"></span>
-            <button type="button" onclick="clearCart()">Очистить</button>
-        </div>
         <div class="items">
-            <h3 class="items__tittle">Товары</h3>
+            <h3 class="items-tittle">Каталог</h3>
+            <input class="items-search" id="search" type="text" placeholder="Введите название товара">
             <div class="catalog">
             </div>
+        </div>
+        <div class="cart" id="DOMcartList">
+            <h3 class="cart-tittle">Корзина</h3>
+            <table class="selected-items"></table>
+            <span class="sum"></span>
+            <button type="button" data-action="clearCart">Очистить корзину</button>
         </div>
     </div>
     <script src="cart.js"></script>
